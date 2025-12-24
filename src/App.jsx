@@ -1,0 +1,181 @@
+import React, { useState, useEffect } from 'react';
+// AGREGADO: Calendar e Historial en las importaciones
+import { LayoutDashboard, Users, UserPlus, Calendar } from 'lucide-react';
+import Dashboard from './components/Dashboard.jsx';
+import ListaClientes from './components/ListaClientes.jsx';
+import Formulario from './components/Formulario.jsx';
+import Login from './components/Login.jsx';
+import Historial from './components/Historial.jsx';
+import { supabase } from './supabaseClient';
+
+export default function App() {
+  const [vista, setVista] = useState("dashboard");
+  const [busqueda, setBusqueda] = useState("");
+  const [clienteEdicion, setClienteEdicion] = useState(null);
+  const [clientes, setClientes] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [pagos, setPagos] = useState([]);
+
+  // --- FUNCIÓN UNIFICADA PARA CARGAR DATOS ---
+  const cargarTodo = async () => {
+    setCargando(true);
+    try {
+      // 1. Obtener Clientes
+      const { data: dataClientes } = await supabase
+        .from('clientes')
+        .select('*')
+        .order('nombre', { ascending: true });
+      setClientes(dataClientes || []);
+
+      // 2. Obtener Pagos
+      const { data: dataPagos } = await supabase
+        .from('pagos')
+        .select('*, clientes(nombre)')
+        .order('fecha_pago', { ascending: false });
+      setPagos(dataPagos || []);
+    } catch (error) {
+      console.error("Error cargando datos:", error);
+    }
+    setCargando(false);
+  };
+
+  useEffect(() => {
+    cargarTodo();
+  }, []);
+
+  // --- LÓGICA DE LOGIN ---
+  const [admin, setAdmin] = useState(() => {
+    const saved = localStorage.getItem("aguatera_admin");
+    return saved ? JSON.parse(saved) : null;
+  });
+  const [sesionIniciada, setSesionIniciada] = useState(false);
+
+  // --- ESTADÍSTICAS ---
+  const totalCobrado = clientes.filter(c => Number(c.deuda) === 0).length * 50000;
+  const morosos = clientes.filter(c => Number(c.deuda) > 0);
+  const totalPendiente = morosos.reduce((acc, c) => acc + Number(c.deuda), 0);
+
+  // --- FUNCIONES CRUD ---
+  const gestionarGuardar = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const clienteData = {
+      nombre: fd.get("nombre"),
+      tel: fd.get("tel"),
+      deuda: Number(fd.get("deuda"))
+    };
+
+    if (clienteEdicion) {
+      await supabase.from('clientes').update(clienteData).eq('id', clienteEdicion.id);
+    } else {
+      await supabase.from('clientes').insert([clienteData]);
+    }
+    
+    await cargarTodo(); // Corregido: antes decía obtenerClientes
+    setVista("clientes");
+    setClienteEdicion(null);
+  };
+
+  const registrarPago = async (cliente) => {
+    if (!cliente) return;
+    if (confirm(`¿Confirmar cobro de Gs. ${cliente.deuda} para ${cliente.nombre}?`)) {
+      try {
+        const { error: errorInsert } = await supabase
+          .from('pagos')
+          .insert([{ 
+            cliente_id: cliente.id, 
+            monto: cliente.deuda, 
+            metodo_pago: 'Efectivo' 
+          }]);
+        if (errorInsert) throw errorInsert;
+
+        await supabase.from('clientes').update({ deuda: 0 }).eq('id', cliente.id);
+        
+        alert("¡Pago registrado!");
+        await cargarTodo(); 
+      } catch (err) {
+        alert("Error técnico: " + err.message);
+      }
+    }
+  };
+
+  const eliminarCliente = async (id) => {
+    if (confirm("¿Eliminar permanentemente?")) {
+      await supabase.from('clientes').delete().eq('id', id);
+      await cargarTodo();
+    }
+  };
+
+  // --- PROTECCIÓN DE LOGIN ---
+  if (!sesionIniciada) {
+    return <Login adminExistente={admin !== null} 
+      onLogin={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        if (admin && fd.get("usuario") === admin.usuario && fd.get("pass") === admin.pass) setSesionIniciada(true);
+        else alert("Usuario o contraseña incorrectos");
+      }} 
+      onRegister={(e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const data = { usuario: fd.get("usuario"), pass: fd.get("pass") };
+        localStorage.setItem("aguatera_admin", JSON.stringify(data));
+        setAdmin(data);
+        setSesionIniciada(true);
+      }} 
+    />;
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 pb-20 font-sans text-slate-900">
+      <header className="bg-blue-700 text-white p-6 shadow-md sticky top-0 z-20">
+        <div className="max-w-md mx-auto flex justify-between items-center">
+          <h1 className="text-xl font-black italic tracking-tighter uppercase">Agua-Control</h1>
+          <button onClick={() => setSesionIniciada(false)} className="text-[10px] opacity-60 font-bold underline">SALIR</button>
+        </div>
+      </header>
+
+      <main className="p-4 max-w-md mx-auto">
+        {cargando ? (
+          <p className="text-center font-bold text-slate-400 py-10">Conectando a la nube...</p>
+        ) : (
+          <>
+            {vista === "dashboard" && <Dashboard totalCobrado={totalCobrado} morososCount={morosos.length} totalPendiente={totalPendiente} />}
+            
+            {vista === "clientes" && (
+              <>
+                <button onClick={() => { setClienteEdicion(null); setVista("formulario"); }} className="w-full mb-4 p-4 bg-blue-100 text-blue-700 rounded-2xl font-bold flex justify-center items-center gap-2 border-2 border-dashed border-blue-300 italic">
+                  + REGISTRAR NUEVO VECINO
+                </button>
+                <ListaClientes 
+                  clientes={clientes} busqueda={busqueda} setBusqueda={setBusqueda} 
+                  onEdit={(c) => { setClienteEdicion(c); setVista("formulario"); }} 
+                  onDelete={eliminarCliente} 
+                  onPay={registrarPago} 
+                />
+              </>
+            )}
+
+            {vista === "historial" && <Historial pagos={pagos} />}
+
+            {vista === "formulario" && <Formulario clienteEdicion={clienteEdicion} onGuardar={gestionarGuardar} onCancelar={() => setVista("clientes")} />}
+          </>
+        )}
+      </main>
+
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-slate-200 flex justify-around p-3 z-30">
+        <button onClick={() => setVista("dashboard")} className={`flex flex-col items-center p-2 ${vista === 'dashboard' ? 'text-blue-600' : 'text-slate-400'}`}>
+          <LayoutDashboard size={24} /><span className="text-[10px] font-bold">RESUMEN</span>
+        </button>
+        
+        <button onClick={() => setVista("clientes")} className={`flex flex-col items-center p-2 ${vista === 'clientes' ? 'text-blue-600' : 'text-slate-400'}`}>
+          <Users size={24} /><span className="text-[10px] font-bold">CLIENTES</span>
+        </button>
+
+        <button onClick={() => setVista("historial")} className={`flex flex-col items-center p-2 ${vista === 'historial' ? 'text-blue-600' : 'text-slate-400'}`}>
+          <Calendar size={24} /><span className="text-[10px] font-bold">HISTORIAL</span>
+        </button>
+      </nav>
+    </div>
+  );
+}
