@@ -1,16 +1,16 @@
-# React + Vite
+# Aguatera App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicación web desarrollada para la gestión de una **Junta de Saneamiento** en la ciudad de **Encarnación, Paraguay**.  
+Su objetivo principal es facilitar el control de **pagos de usuarios** y **conexiones de servicio**, ofreciendo una interfaz moderna y accesible.
 
-Currently, two official plugins are available:
+## 🚀 Tecnologías utilizadas
+- **React** → Construcción de la interfaz de usuario.  
+- **Tailwind CSS** → Estilos rápidos y personalizables.  
+- **Supabase** → Base de datos, autenticación y backend.  
+- **Vercel** → Despliegue y hosting en la nube.  
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## ✨ Características principales
+- Registro y administración de clientes.  
+- Control de pagos y estado de conexiones.  
+- Panel de gestión para la Junta de Saneamiento.  
+- Despliegue seguro con HTTPS automático.  
