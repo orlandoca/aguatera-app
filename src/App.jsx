@@ -180,7 +180,7 @@ const registrarPagoConexion = async (e) => {
       const nuevoAdmin = { 
         usuario: fd.get("usuario"), 
         password_hash: fd.get("pass"),
-        nombre_aguatera: "Mi Aguatera" 
+        nombre_aguatera: "Tanque Tres Bocas" 
       };
 
       // GUARDAR EN SUPABASE
