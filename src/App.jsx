@@ -65,14 +65,15 @@ const registrarPagoConexion = async (e) => {
         .order('fecha_pago', { ascending: false });
       setPagos(dataPagos || []);
 
-      // --- AQUÍ EL NUEVO CÓDIGO ---
-      // 3. Obtener Pagos de Conexión (Paso nuevo)
+      // --- CÓDIGO ACTUALIZADO PARA EL HISTORIAL ---
+      // 3. Obtener Pagos de Conexión CON NOMBRE DEL CLIENTE
       const { data: dataConexiones } = await supabase
         .from('pagos_conexion')
-        .select('cliente_id'); // Solo traemos los IDs para saber quién pagó
+        .select('*, clientes(nombre)') // <--- IMPORTANTE: Agregamos clientes(nombre)
+        .order('fecha_pago', { ascending: false });
       
       setPagosConexion(dataConexiones || []);
-      // ----------------------------
+      // --------------------------------------------
 
     } catch (error) {
       console.error("Error cargando datos:", error);
@@ -240,7 +241,7 @@ const registrarPagoConexion = async (e) => {
               </>
             )}
 
-            {vista === "historial" && <Historial pagos={pagos} />}
+            {vista === "historial" && <Historial pagos={pagos} pagosConexion={pagosConexion} />}
 
             {vista === "formulario" && <Formulario clienteEdicion={clienteEdicion} onGuardar={gestionarGuardar} onCancelar={() => setVista("clientes")} />}
             {vista === "conexion" && (
