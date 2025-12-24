@@ -62,7 +62,8 @@ export default function App() {
     const clienteData = {
       nombre: fd.get("nombre"),
       tel: fd.get("tel"),
-      deuda: Number(fd.get("deuda"))
+      deuda: Number(fd.get("deuda")),
+      cedula: fd.get("cedula")
     };
 
     if (clienteEdicion) {
