@@ -21,19 +21,27 @@ export default function App() {
 
 
   const generarDeudasMensuales = async () => {
+  // 1. Obtener la fecha de hoy en formato texto (ej: "2023-10-24")
+  const hoy = new Date().toISOString().split('T')[0];
+  const ultimaCarga = localStorage.getItem('ultima_facturacion');
+
+  // 2. Validar si ya se hizo hoy
+  if (ultimaCarga === hoy) {
+    alert("⚠️ ¡Atención! Ya has generado las cuotas del mes hoy. No es necesario hacerlo de nuevo para evitar duplicar deudas.");
+    return;
+  }
+
   const confirmar = confirm("¿Deseas cargar la cuota de Gs. 33.000 a todos los clientes?");
   if (!confirmar) return;
 
   setCargando(true);
   try {
-    // 1. Obtenemos a todos los clientes
     const { data: listaClientes, error: errFetch } = await supabase
       .from('clientes')
       .select('id, deuda');
 
     if (errFetch) throw errFetch;
 
-    // 2. Sumamos 33.000 a la deuda de cada uno
     const promesas = listaClientes.map(cliente => {
       return supabase
         .from('clientes')
@@ -43,10 +51,13 @@ export default function App() {
 
     await Promise.all(promesas);
 
-    alert(`¡Éxito! Se actualizaron ${listaClientes.length} clientes con la cuota de Gs. 33.000.`);
+    // 3. Si todo sale bien, guardamos la fecha del éxito
+    localStorage.setItem('ultima_facturacion', hoy);
+
+    alert(`¡Éxito! Se actualizaron ${listaClientes.length} clientes.`);
     await cargarTodo(); 
   } catch (error) {
-    alert("Error al generar deudas: " + error.message);
+    alert("Error: " + error.message);
   }
   setCargando(false);
 };
