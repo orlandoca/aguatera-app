@@ -20,6 +20,36 @@ export default function App() {
   const [pagosConexion, setPagosConexion] = useState([]); // Nuevo estado
 
 
+  const generarDeudasMensuales = async () => {
+  const confirmar = confirm("¿Deseas cargar la cuota de Gs. 33.000 a todos los clientes?");
+  if (!confirmar) return;
+
+  setCargando(true);
+  try {
+    // 1. Obtenemos a todos los clientes
+    const { data: listaClientes, error: errFetch } = await supabase
+      .from('clientes')
+      .select('id, deuda');
+
+    if (errFetch) throw errFetch;
+
+    // 2. Sumamos 33.000 a la deuda de cada uno
+    const promesas = listaClientes.map(cliente => {
+      return supabase
+        .from('clientes')
+        .update({ deuda: Number(cliente.deuda) + 33000 })
+        .eq('id', cliente.id);
+    });
+
+    await Promise.all(promesas);
+
+    alert(`¡Éxito! Se actualizaron ${listaClientes.length} clientes con la cuota de Gs. 33.000.`);
+    await cargarTodo(); 
+  } catch (error) {
+    alert("Error al generar deudas: " + error.message);
+  }
+  setCargando(false);
+};
 
   // --- FUNCIÓN PARA PAGO DE CONEXIÓN ---
 const registrarPagoConexion = async (e) => {
@@ -223,7 +253,7 @@ const registrarPagoConexion = async (e) => {
           <p className="text-center font-bold text-slate-400 py-10">Conectando a la nube...</p>
         ) : (
           <>
-            {vista === "dashboard" && <Dashboard totalCobrado={totalCobrado} morososCount={morosos.length} totalPendiente={totalPendiente} />}
+            {vista === "dashboard" && <Dashboard totalCobrado={totalCobrado} morososCount={morosos.length} totalPendiente={totalPendiente} onGenerarMensualidades={generarDeudasMensuales} />}
             
             {vista === "clientes" && (
               <>
