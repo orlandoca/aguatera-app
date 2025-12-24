@@ -108,23 +108,55 @@ export default function App() {
 
   // --- PROTECCIÓN DE LOGIN ---
   if (!sesionIniciada) {
-    return <Login adminExistente={admin !== null} 
-      onLogin={(e) => {
-        e.preventDefault();
-        const fd = new FormData(e.target);
-        if (admin && fd.get("usuario") === admin.usuario && fd.get("pass") === admin.pass) setSesionIniciada(true);
-        else alert("Usuario o contraseña incorrectos");
-      }} 
-      onRegister={(e) => {
-        e.preventDefault();
-        const fd = new FormData(e.target);
-        const data = { usuario: fd.get("usuario"), pass: fd.get("pass") };
-        localStorage.setItem("aguatera_admin", JSON.stringify(data));
+  return <Login 
+    adminExistente={admin !== null} 
+    onLogin={async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const user = fd.get("usuario");
+      const pass = fd.get("pass");
+
+      // BUSCAR EN SUPABASE
+      const { data, error } = await supabase
+        .from('perfiles_admin')
+        .select('*')
+        .eq('usuario', user)
+        .eq('password_hash', pass) // Comparamos usuario y contraseña
+        .single();
+
+      if (data) {
         setAdmin(data);
         setSesionIniciada(true);
-      }} 
-    />;
-  }
+      } else {
+        alert("Usuario o contraseña incorrectos");
+      }
+    }} 
+    onRegister={async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const nuevoAdmin = { 
+        usuario: fd.get("usuario"), 
+        password_hash: fd.get("pass"),
+        nombre_aguatera: "Mi Aguatera" 
+      };
+
+      // GUARDAR EN SUPABASE
+      const { data, error } = await supabase
+        .from('perfiles_admin')
+        .insert([nuevoAdmin])
+        .select()
+        .single();
+
+      if (error) {
+        alert("Error al registrar: " + error.message);
+      } else {
+        setAdmin(data);
+        setSesionIniciada(true);
+        alert("Cuenta creada en la nube con éxito");
+      }
+    }} 
+  />;
+}
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 font-sans text-slate-900">
