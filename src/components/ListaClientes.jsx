@@ -1,7 +1,8 @@
 import React from 'react';
-import { Search, Pencil, Trash2, MessageCircle } from 'lucide-react';
+import { Search, Pencil, Trash2, MessageCircle, Droplets } from 'lucide-react';
 
-export default function ListaClientes({ clientes, busqueda, setBusqueda, onEdit, onDelete, onPay }) {
+// 1. Agregamos onConexion a las llaves de los props
+export default function ListaClientes({ clientes, busqueda, setBusqueda, onEdit, onDelete, onPay, onConexion }) {
   return (
     <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-300">
       <div className="relative">
@@ -20,9 +21,24 @@ export default function ListaClientes({ clientes, busqueda, setBusqueda, onEdit,
             <div className="flex justify-between items-start mb-3">
               <div>
                 <h3 className="font-bold text-slate-800">{c.nombre}</h3>
-                <p className="text-xs text-slate-400 font-mono text-[10px]">TEL: {c.tel}</p>
+                <div className="flex gap-2">
+                  <p className="text-xs text-slate-400 font-mono text-[10px]">TEL: {c.tel}</p>
+                  {/* 2. Mostramos la cédula si el cliente la tiene */}
+                  {c.cedula && (
+                    <p className="text-xs text-blue-400 font-mono text-[10px]">C.I.: {c.cedula}</p>
+                  )}
+                </div>
               </div>
               <div className="flex gap-1">
+                {/* 3. BOTÓN NUEVO: Icono de gota para el pago de conexión */}
+                <button 
+                  onClick={() => onConexion(c)} 
+                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                  title="Registrar Conexión"
+                >
+                  <Droplets size={16}/>
+                </button>
+
                 <button onClick={() => onEdit(c)} className="p-2 text-blue-500"><Pencil size={16}/></button>
                 <button onClick={() => onDelete(c.id)} className="p-2 text-slate-300"><Trash2 size={16}/></button>
               </div>

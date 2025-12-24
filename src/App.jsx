@@ -7,6 +7,7 @@ import Formulario from './components/Formulario.jsx';
 import Login from './components/Login.jsx';
 import Historial from './components/Historial.jsx';
 import { supabase } from './supabaseClient';
+import FormularioConexion from './components/FormularioConexion.jsx';
 
 export default function App() {
   const [vista, setVista] = useState("dashboard");
@@ -15,6 +16,34 @@ export default function App() {
   const [clientes, setClientes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [pagos, setPagos] = useState([]);
+  const [clienteParaConexion, setClienteParaConexion] = useState(null); // Nuevo estado
+
+
+  // --- FUNCIÓN PARA PAGO DE CONEXIÓN ---
+const registrarPagoConexion = async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  
+  const pagoData = {
+    cliente_id: Number(clienteParaConexion.id),
+    monto: Number(fd.get("monto")),
+    metodo_pago: fd.get("metodo"),
+    referencia: fd.get("referencia"),
+    fecha_pago: new Date().toISOString()
+  };
+
+  try {
+    const { error } = await supabase.from('pagos_conexion').insert([pagoData]);
+    if (error) throw error;
+
+    alert("¡Conexión registrada con éxito!");
+    setVista("clientes");
+    setClienteParaConexion(null);
+    await cargarTodo(); 
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+};
 
   // --- FUNCIÓN UNIFICADA PARA CARGAR DATOS ---
   const cargarTodo = async () => {
@@ -193,6 +222,7 @@ export default function App() {
                   onEdit={(c) => { setClienteEdicion(c); setVista("formulario"); }} 
                   onDelete={eliminarCliente} 
                   onPay={registrarPago} 
+                  onConexion={(c) => { setClienteParaConexion(c); setVista("conexion"); }}
                 />
               </>
             )}
@@ -200,6 +230,13 @@ export default function App() {
             {vista === "historial" && <Historial pagos={pagos} />}
 
             {vista === "formulario" && <Formulario clienteEdicion={clienteEdicion} onGuardar={gestionarGuardar} onCancelar={() => setVista("clientes")} />}
+            {vista === "conexion" && (
+        <FormularioConexion 
+          nombreCliente={clienteParaConexion?.nombre} 
+          onGuardar={registrarPagoConexion} 
+          onCancelar={() => setVista("clientes")} 
+        />
+      )}
           </>
         )}
       </main>
