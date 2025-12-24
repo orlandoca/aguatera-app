@@ -17,6 +17,8 @@ export default function App() {
   const [cargando, setCargando] = useState(true);
   const [pagos, setPagos] = useState([]);
   const [clienteParaConexion, setClienteParaConexion] = useState(null); // Nuevo estado
+  const [pagosConexion, setPagosConexion] = useState([]); // Nuevo estado
+
 
 
   // --- FUNCIÓN PARA PAGO DE CONEXIÓN ---
@@ -46,7 +48,7 @@ const registrarPagoConexion = async (e) => {
 };
 
   // --- FUNCIÓN UNIFICADA PARA CARGAR DATOS ---
-  const cargarTodo = async () => {
+ const cargarTodo = async () => {
     setCargando(true);
     try {
       // 1. Obtener Clientes
@@ -56,12 +58,22 @@ const registrarPagoConexion = async (e) => {
         .order('nombre', { ascending: true });
       setClientes(dataClientes || []);
 
-      // 2. Obtener Pagos
+      // 2. Obtener Pagos Mensuales
       const { data: dataPagos } = await supabase
         .from('pagos')
         .select('*, clientes(nombre)')
         .order('fecha_pago', { ascending: false });
       setPagos(dataPagos || []);
+
+      // --- AQUÍ EL NUEVO CÓDIGO ---
+      // 3. Obtener Pagos de Conexión (Paso nuevo)
+      const { data: dataConexiones } = await supabase
+        .from('pagos_conexion')
+        .select('cliente_id'); // Solo traemos los IDs para saber quién pagó
+      
+      setPagosConexion(dataConexiones || []);
+      // ----------------------------
+
     } catch (error) {
       console.error("Error cargando datos:", error);
     }
@@ -223,6 +235,7 @@ const registrarPagoConexion = async (e) => {
                   onDelete={eliminarCliente} 
                   onPay={registrarPago} 
                   onConexion={(c) => { setClienteParaConexion(c); setVista("conexion"); }}
+                  pagosConexion={pagosConexion}
                 />
               </>
             )}
