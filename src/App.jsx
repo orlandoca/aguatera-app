@@ -8,6 +8,8 @@ import Login from './components/Login.jsx';
 import Historial from './components/Historial.jsx';
 import { supabase } from './supabaseClient';
 import FormularioConexion from './components/FormularioConexion.jsx';
+import * as XLSX from 'xlsx';
+
 
 export default function App() {
   const [vista, setVista] = useState("dashboard");
@@ -62,6 +64,30 @@ export default function App() {
   setCargando(false);
 };
 
+const exportarExcelPagos = () => {
+  if (pagos.length === 0) {
+    alert("No hay pagos registrados para exportar.");
+    return;
+  }
+
+  // 1. Preparamos los datos con nombres de columnas claros
+  const datosExcel = pagos.map(p => ({
+    Fecha: new Date(p.created_at).toLocaleDateString('es-PY'),
+    Cliente: p.cliente_nombre,
+    Monto: p.monto,
+    Categoría: p.categoria || 'Cuota Mensual',
+    Detalle: p.detalle || ''
+  }));
+
+  // 2. Creamos el libro y la hoja de Excel
+  const hoja = XLSX.utils.json_to_sheet(datosExcel);
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, "Pagos del Mes");
+
+  // 3. Descargamos el archivo
+  const fechaHoy = new Date().toISOString().split('T')[0];
+  XLSX.writeFile(libro, `Reporte_Pagos_${fechaHoy}.xlsx`);
+};
   // --- FUNCIÓN PARA PAGO DE CONEXIÓN ---
 const registrarPagoConexion = async (e) => {
   e.preventDefault();
