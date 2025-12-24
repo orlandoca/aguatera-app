@@ -160,12 +160,20 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 font-sans text-slate-900">
-      <header className="bg-blue-700 text-white p-6 shadow-md sticky top-0 z-20">
-        <div className="max-w-md mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-black italic tracking-tighter uppercase">Agua-Control</h1>
-          <button onClick={() => setSesionIniciada(false)} className="text-[10px] opacity-60 font-bold underline">SALIR</button>
-        </div>
-      </header>
+    <header className="bg-blue-700 text-white p-6 shadow-md sticky top-0 z-20">
+  <div className="max-w-md mx-auto flex justify-between items-center">
+    {/* Ahora muestra el nombre personalizado o 'Sistema' si no hay datos */}
+    <h1 className="text-xl font-black italic tracking-tighter uppercase">
+      {admin?.nombre_aguatera || "Agua-Control"}
+    </h1>
+    <button 
+      onClick={() => setSesionIniciada(false)} 
+      className="text-[10px] opacity-60 font-bold underline"
+    >
+      SALIR
+    </button>
+  </div>
+</header>
 
       <main className="p-4 max-w-md mx-auto">
         {cargando ? (
