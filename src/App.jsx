@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
 // AGREGADO: Calendar e Historial en las importaciones
-import { LayoutDashboard, Users, UserPlus, Calendar } from 'lucide-react';
+import { LayoutDashboard, Users, Calendar } from 'lucide-react';
 import Dashboard from './components/Dashboard.jsx';
 import ListaClientes from './components/ListaClientes.jsx';
 import Formulario from './components/Formulario.jsx';
 import Login from './components/Login.jsx';
 import Historial from './components/Historial.jsx';
 import { supabase } from './supabaseClient';
-import FormularioConexion from './components/FormularioConexion.jsx';
 import * as XLSX from 'xlsx';
 
 
@@ -18,129 +17,56 @@ export default function App() {
   const [clientes, setClientes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [pagos, setPagos] = useState([]);
-  const [clienteParaConexion, setClienteParaConexion] = useState(null); // Nuevo estado
-  const [pagosConexion, setPagosConexion] = useState([]); // Nuevo estado
 
 
-  const generarDeudasMensuales = async () => {
-  // 1. Obtener la fecha de hoy en formato texto (ej: "2023-10-24")
-  const hoy = new Date().toISOString().split('T')[0];
-  const ultimaCarga = localStorage.getItem('ultima_facturacion');
+  const exportarExcelPagos = () => {
+    if (pagos.length === 0) {
+      alert("No hay pagos registrados para exportar.");
+      return;
+    }
 
-  // 2. Validar si ya se hizo hoy
-  if (ultimaCarga === hoy) {
-    alert("⚠️ ¡Atención! Ya has generado las cuotas del mes hoy. No es necesario hacerlo de nuevo para evitar duplicar deudas.");
-    return;
-  }
+    // 1. Preparamos los datos con nombres de columnas claros
+    const datosExcel = pagos.map(p => ({
+      Fecha: new Date(p.created_at || p.fecha_pago).toLocaleDateString('es-PY'),
+      Cliente: p.clientes?.nombre_completo || 'Desconocido',
+      Monto: p.monto,
+      Metodo: p.metodo || 'Efectivo',
+      Referencia: p.referencia || ''
+    }));
 
-  const confirmar = confirm("¿Deseas cargar la cuota de Gs. 33.000 a todos los clientes?");
-  if (!confirmar) return;
+    // 2. Creamos el libro y la hoja de Excel
+    const hoja = XLSX.utils.json_to_sheet(datosExcel);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, "Pagos del Mes");
 
-  setCargando(true);
-  try {
-    const { data: listaClientes, error: errFetch } = await supabase
-      .from('clientes')
-      .select('id, deuda');
-
-    if (errFetch) throw errFetch;
-
-    const promesas = listaClientes.map(cliente => {
-      return supabase
-        .from('clientes')
-        .update({ deuda: Number(cliente.deuda) + 33000 })
-        .eq('id', cliente.id);
-    });
-
-    await Promise.all(promesas);
-
-    // 3. Si todo sale bien, guardamos la fecha del éxito
-    localStorage.setItem('ultima_facturacion', hoy);
-
-    alert(`¡Éxito! Se actualizaron ${listaClientes.length} clientes.`);
-    await cargarTodo(); 
-  } catch (error) {
-    alert("Error: " + error.message);
-  }
-  setCargando(false);
-};
-
-const exportarExcelPagos = () => {
-  if (pagos.length === 0) {
-    alert("No hay pagos registrados para exportar.");
-    return;
-  }
-
-  // 1. Preparamos los datos con nombres de columnas claros
-  const datosExcel = pagos.map(p => ({
-    Fecha: new Date(p.created_at).toLocaleDateString('es-PY'),
-    Cliente: p.cliente_nombre,
-    Monto: p.monto,
-    Categoría: p.categoria || 'Cuota Mensual',
-    Detalle: p.detalle || ''
-  }));
-
-  // 2. Creamos el libro y la hoja de Excel
-  const hoja = XLSX.utils.json_to_sheet(datosExcel);
-  const libro = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(libro, hoja, "Pagos del Mes");
-
-  // 3. Descargamos el archivo
-  const fechaHoy = new Date().toISOString().split('T')[0];
-  XLSX.writeFile(libro, `Reporte_Pagos_${fechaHoy}.xlsx`);
-};
-  // --- FUNCIÓN PARA PAGO DE CONEXIÓN ---
-const registrarPagoConexion = async (e) => {
-  e.preventDefault();
-  const fd = new FormData(e.target);
-  
-  const pagoData = {
-    cliente_id: Number(clienteParaConexion.id),
-    monto: Number(fd.get("monto")),
-    metodo_pago: fd.get("metodo"),
-    referencia: fd.get("referencia"),
-    fecha_pago: new Date().toISOString()
+    // 3. Descargamos el archivo
+    const fechaHoy = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(libro, `Reporte_Pagos_${fechaHoy}.xlsx`);
   };
 
-  try {
-    const { error } = await supabase.from('pagos_conexion').insert([pagoData]);
-    if (error) throw error;
-
-    alert("¡Conexión registrada con éxito!");
-    setVista("clientes");
-    setClienteParaConexion(null);
-    await cargarTodo(); 
-  } catch (err) {
-    alert("Error: " + err.message);
-  }
-};
 
   // --- FUNCIÓN UNIFICADA PARA CARGAR DATOS ---
- const cargarTodo = async () => {
+  const cargarTodo = async () => {
     setCargando(true);
     try {
-      // 1. Obtener Clientes
-      const { data: dataClientes } = await supabase
+      // 1. Obtener Clientes (Mapeando nombres de columnas de la BD)
+      const { data: dataClientes, error: errorClientes } = await supabase
         .from('clientes')
         .select('*')
-        .order('nombre', { ascending: true });
+        .order('nombre_completo', { ascending: true });
+
+      if (errorClientes) throw errorClientes;
       setClientes(dataClientes || []);
+      console.log("dataClientes", dataClientes);
 
-      // 2. Obtener Pagos Mensuales
-      const { data: dataPagos } = await supabase
+      // 2. Obtener Pagos
+      const { data: dataPagos, error: errorPagos } = await supabase
         .from('pagos')
-        .select('*, clientes(nombre)')
+        .select('*, clientes(nombre_completo)')
         .order('fecha_pago', { ascending: false });
-      setPagos(dataPagos || []);
 
-      // --- CÓDIGO ACTUALIZADO PARA EL HISTORIAL ---
-      // 3. Obtener Pagos de Conexión CON NOMBRE DEL CLIENTE
-      const { data: dataConexiones } = await supabase
-        .from('pagos_conexion')
-        .select('*, clientes(nombre)') // <--- IMPORTANTE: Agregamos clientes(nombre)
-        .order('fecha_pago', { ascending: false });
-      
-      setPagosConexion(dataConexiones || []);
-      // --------------------------------------------
+      if (errorPagos) throw errorPagos;
+      setPagos(dataPagos || []);
 
     } catch (error) {
       console.error("Error cargando datos:", error);
@@ -152,60 +78,86 @@ const registrarPagoConexion = async (e) => {
     cargarTodo();
   }, []);
 
-  // --- LÓGICA DE LOGIN ---
-  const [admin, setAdmin] = useState(() => {
-    const saved = localStorage.getItem("aguatera_admin");
-    return saved ? JSON.parse(saved) : null;
-  });
-  const [sesionIniciada, setSesionIniciada] = useState(false);
+  // --- LÓGICA DE LOGIN CON SUPABASE ---
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   // --- ESTADÍSTICAS ---
-  const totalCobrado = clientes.filter(c => Number(c.deuda) === 0).length * 50000;
-  const morosos = clientes.filter(c => Number(c.deuda) > 0);
-  const totalPendiente = morosos.reduce((acc, c) => acc + Number(c.deuda), 0);
+  // Ya no calculamos deuda ni morosos porque no existe ese campo
+  const totalCobrado = pagos.reduce((acc, p) => acc + Number(p.monto), 0);
 
   // --- FUNCIONES CRUD ---
   const gestionarGuardar = async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
     const clienteData = {
-      nombre: fd.get("nombre"),
-      tel: fd.get("tel"),
-      deuda: Number(fd.get("deuda")),
-      cedula: fd.get("cedula")
+      nombre_completo: fd.get("nombre"),
+      telefono: fd.get("tel"),
+      cedula: fd.get("cedula"),
+      direccion: fd.get("direccion"),
+      // estado: 'Activo' // Podríamos poner un default
     };
 
-    if (clienteEdicion) {
-      await supabase.from('clientes').update(clienteData).eq('id', clienteEdicion.id);
-    } else {
-      await supabase.from('clientes').insert([clienteData]);
+    try {
+      if (clienteEdicion) {
+        const { error } = await supabase.from('clientes').update(clienteData).eq('id', clienteEdicion.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('clientes').insert([clienteData]);
+        if (error) throw error;
+      }
+
+      await cargarTodo();
+      setVista("clientes");
+      setClienteEdicion(null);
+    } catch (err) {
+      alert("Error al guardar: " + err.message);
     }
-    
-    await cargarTodo(); // Corregido: antes decía obtenerClientes
-    setVista("clientes");
-    setClienteEdicion(null);
   };
 
   const registrarPago = async (cliente) => {
     if (!cliente) return;
-    if (confirm(`¿Confirmar cobro de Gs. ${cliente.deuda} para ${cliente.nombre}?`)) {
-      try {
-        const { error: errorInsert } = await supabase
-          .from('pagos')
-          .insert([{ 
-            cliente_id: cliente.id, 
-            monto: cliente.deuda, 
-            metodo_pago: 'Efectivo' 
-          }]);
-        if (errorInsert) throw errorInsert;
 
-        await supabase.from('clientes').update({ deuda: 0 }).eq('id', cliente.id);
-        
-        alert("¡Pago registrado!");
-        await cargarTodo(); 
-      } catch (err) {
-        alert("Error técnico: " + err.message);
-      }
+    // Al no haber deuda fija, preguntamos el monto
+    const montoStr = prompt(`Ingrese el monto a cobrar a ${cliente.nombre_completo}:`, "33000");
+    if (!montoStr) return;
+
+    const monto = Number(montoStr);
+    if (isNaN(monto) || monto <= 0) {
+      alert("Monto inválido");
+      return;
+    }
+
+    try {
+      const { error: errorInsert } = await supabase
+        .from('pagos')
+        .insert([{
+          cliente_id: cliente.id,
+          monto: monto,
+          tipo: 'Mensualidad', // Valor por defecto
+          metodo: 'Efectivo',
+          fecha_pago: new Date().toISOString()
+        }]);
+
+      if (errorInsert) throw errorInsert;
+
+      alert("¡Pago registrado!");
+      await cargarTodo();
+    } catch (err) {
+      alert("Error técnico: " + err.message);
     }
   };
 
@@ -217,107 +169,70 @@ const registrarPagoConexion = async (e) => {
   };
 
   // --- PROTECCIÓN DE LOGIN ---
-  if (!sesionIniciada) {
-  return <Login 
-    adminExistente={admin !== null} 
-    onLogin={async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const user = fd.get("usuario");
-      const pass = fd.get("pass");
+  // --- PROTECCIÓN DE LOGIN ---
+  if (!session) {
+    return (
+      <Login
+        onLogin={async (e) => {
+          e.preventDefault();
+          const fd = new FormData(e.target);
+          const email = fd.get("email");
+          const password = fd.get("password");
 
-      // BUSCAR EN SUPABASE
-      const { data, error } = await supabase
-        .from('perfiles_admin')
-        .select('*')
-        .eq('usuario', user)
-        .eq('password_hash', pass) // Comparamos usuario y contraseña
-        .single();
+          const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
 
-      if (data) {
-        setAdmin(data);
-        setSesionIniciada(true);
-      } else {
-        alert("Usuario o contraseña incorrectos");
-      }
-    }} 
-    onRegister={async (e) => {
-      e.preventDefault();
-      const fd = new FormData(e.target);
-      const nuevoAdmin = { 
-        usuario: fd.get("usuario"), 
-        password_hash: fd.get("pass"),
-        nombre_aguatera: "Tanque Tres Bocas" 
-      };
-
-      // GUARDAR EN SUPABASE
-      const { data, error } = await supabase
-        .from('perfiles_admin')
-        .insert([nuevoAdmin])
-        .select()
-        .single();
-
-      if (error) {
-        alert("Error al registrar: " + error.message);
-      } else {
-        setAdmin(data);
-        setSesionIniciada(true);
-        alert("Cuenta creada en la nube con éxito");
-      }
-    }} 
-  />;
-}
+          if (error) {
+            alert("Error al iniciar sesión: " + error.message);
+          }
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 font-sans text-slate-900">
-    <header className="bg-blue-700 text-white p-6 shadow-md sticky top-0 z-20">
-  <div className="max-w-md mx-auto flex justify-between items-center">
-    {/* Ahora muestra el nombre personalizado o 'Sistema' si no hay datos */}
-    <h1 className="text-xl font-black italic tracking-tighter uppercase">
-      {admin?.nombre_aguatera || "Agua-Control"}
-    </h1>
-    <button 
-      onClick={() => setSesionIniciada(false)} 
-      className="text-[10px] opacity-60 font-bold underline"
-    >
-      SALIR
-    </button>
-  </div>
-</header>
+      <header className="bg-blue-700 text-white p-6 shadow-md sticky top-0 z-20">
+        <div className="max-w-md mx-auto flex justify-between items-center">
+          {/* Ahora muestra el nombre personalizado o 'Sistema' si no hay datos */}
+          <h1 className="text-xl font-black italic tracking-tighter uppercase">
+            {session.user.email}
+          </h1>
+          <button
+            onClick={() => supabase.auth.signOut()}
+            className="text-[10px] opacity-60 font-bold underline"
+          >
+            SALIR
+          </button>
+        </div>
+      </header>
 
       <main className="p-4 max-w-md mx-auto">
         {cargando ? (
           <p className="text-center font-bold text-slate-400 py-10">Conectando a la nube...</p>
         ) : (
           <>
-            {vista === "dashboard" && <Dashboard totalCobrado={totalCobrado} morososCount={morosos.length} totalPendiente={totalPendiente} onGenerarMensualidades={generarDeudasMensuales} />}
-            
+            {vista === "dashboard" && <Dashboard totalCobrado={totalCobrado} />}
+
             {vista === "clientes" && (
               <>
                 <button onClick={() => { setClienteEdicion(null); setVista("formulario"); }} className="w-full mb-4 p-4 bg-blue-100 text-blue-700 rounded-2xl font-bold flex justify-center items-center gap-2 border-2 border-dashed border-blue-300 italic">
-                  + REGISTRAR NUEVO VECINO
+                  + REGISTRAR VECINO
                 </button>
-                <ListaClientes 
-                  clientes={clientes} busqueda={busqueda} setBusqueda={setBusqueda} 
-                  onEdit={(c) => { setClienteEdicion(c); setVista("formulario"); }} 
-                  onDelete={eliminarCliente} 
-                  onPay={registrarPago} 
-                  onConexion={(c) => { setClienteParaConexion(c); setVista("conexion"); }}
-                  pagosConexion={pagosConexion}
+                <ListaClientes
+                  clientes={clientes} busqueda={busqueda} setBusqueda={setBusqueda}
+                  onEdit={(c) => { setClienteEdicion(c); setVista("formulario"); }}
+                  onDelete={eliminarCliente}
+                  onPay={registrarPago}
                 />
               </>
             )}
 
-            {vista === "historial" && <Historial pagos={pagos} pagosConexion={pagosConexion} />}
+            {vista === "historial" && <Historial pagos={pagos} />}
 
             {vista === "formulario" && <Formulario clienteEdicion={clienteEdicion} onGuardar={gestionarGuardar} onCancelar={() => setVista("clientes")} />}
-            {vista === "conexion" && (
-        <FormularioConexion 
-          nombreCliente={clienteParaConexion?.nombre} 
-          onGuardar={registrarPagoConexion} 
-          onCancelar={() => setVista("clientes")} 
-        />
-      )}
           </>
         )}
       </main>
@@ -326,7 +241,7 @@ const registrarPagoConexion = async (e) => {
         <button onClick={() => setVista("dashboard")} className={`flex flex-col items-center p-2 ${vista === 'dashboard' ? 'text-blue-600' : 'text-slate-400'}`}>
           <LayoutDashboard size={24} /><span className="text-[10px] font-bold">RESUMEN</span>
         </button>
-        
+
         <button onClick={() => setVista("clientes")} className={`flex flex-col items-center p-2 ${vista === 'clientes' ? 'text-blue-600' : 'text-slate-400'}`}>
           <Users size={24} /><span className="text-[10px] font-bold">CLIENTES</span>
         </button>
