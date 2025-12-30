@@ -24,5 +24,16 @@ export const authService = {
     onAuthStateChange(callback) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(callback);
         return subscription;
+    },
+
+    async getProfile(userId) {
+        const { data, error } = await supabase
+            .from('perfiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        if (error) throw error;
+        return data;
     }
 };

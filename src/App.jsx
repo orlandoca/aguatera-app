@@ -9,20 +9,39 @@ import './App.css'; // Importing CSS if needed, or rely on index.css
 
 export default function App() {
   const [session, setSession] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [view, setView] = useState("dashboard");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check active session
-    authService.getSession().then((session) => {
+    authService.getSession().then(async (session) => {
       setSession(session);
+      if (session?.user?.id) {
+        try {
+          const profile = await authService.getProfile(session.user.id);
+          setUserRole(profile?.rol);
+        } catch (e) {
+          console.error("Error fetching profile", e);
+        }
+      }
       setLoading(false);
     });
 
     // Listen for changes
-    const subscription = authService.onAuthStateChange((_event, session) => {
+    const subscription = authService.onAuthStateChange(async (_event, session) => {
       setSession(session);
-      // Reset view on login? Not strictly necessary but good practice
+      if (session?.user?.id) {
+        try {
+          const profile = await authService.getProfile(session.user.id);
+          setUserRole(profile?.rol);
+
+        } catch (e) {
+          console.error("Error fetching profile", e);
+        }
+      } else {
+        setUserRole(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -37,7 +56,7 @@ export default function App() {
   return (
     <MainLayout session={session} activeView={view} onViewChange={setView}>
       {view === 'dashboard' && <DashboardPage />}
-      {view === 'clientes' && <ClientsPage />}
+      {view === 'clientes' && <ClientsPage session={session} userRole={userRole} />}
       {view === 'historial' && <HistoryPage />}
     </MainLayout>
   );

@@ -4,7 +4,11 @@ import Formulario from '../components/Formulario.jsx';
 import { clientsService } from '../services/clients.service';
 import { paymentsService } from '../services/payments.service';
 
-export default function ClientsPage() {
+export default function ClientsPage({ session, userRole = "user" }) {
+    // Verificamos rol pasado explícitamente desde la tabla perfiles
+    const canEdit = userRole !== 'cobrador';
+    console.log("userRole", userRole);
+
     const [view, setView] = useState("list"); // 'list' | 'form'
     const [clients, setClients] = useState([]);
     const [search, setSearch] = useState("");
@@ -29,6 +33,10 @@ export default function ClientsPage() {
 
     const handleSave = async (e) => {
         e.preventDefault();
+        if (!canEdit) {
+            alert("No tienes permisos para realizar esta acción.");
+            return;
+        }
         const fd = new FormData(e.target);
         const clientData = {
             nombre_completo: fd.get("nombre"),
@@ -52,6 +60,10 @@ export default function ClientsPage() {
     };
 
     const handleDelete = async (id) => {
+        if (!canEdit) {
+            alert("No tienes permisos para eliminar.");
+            return;
+        }
         if (window.confirm("¿Eliminar permanentemente?")) {
             try {
                 await clientsService.delete(id);
@@ -101,13 +113,16 @@ export default function ClientsPage() {
 
     return (
         <>
-            <button
-                onClick={() => { setEditingClient(null); setView("form"); }}
-                className="w-full mb-4 p-4 bg-blue-100 text-blue-700 rounded-2xl font-bold flex justify-center items-center gap-2 border-2 border-dashed border-blue-300 italic"
-            >
-                + REGISTRAR VECINO
-            </button>
+            {canEdit && (
+                <button
+                    onClick={() => { setEditingClient(null); setView("form"); }}
+                    className="w-full mb-4 p-4 bg-blue-100 text-blue-700 rounded-2xl font-bold flex justify-center items-center gap-2 border-2 border-dashed border-blue-300 italic"
+                >
+                    + REGISTRAR VECINO
+                </button>
+            )}
             <ListaClientes
+                canEdit={canEdit}
                 clientes={clients}
                 busqueda={search}
                 setBusqueda={setSearch}

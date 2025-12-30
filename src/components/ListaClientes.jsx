@@ -7,7 +7,8 @@ export default function ListaClientes({
   setBusqueda,
   onEdit,
   onDelete,
-  onPay
+  onPay,
+  canEdit = true
 }) {
 
   return (
@@ -37,8 +38,12 @@ export default function ListaClientes({
                 </div>
 
                 <div className="flex gap-1">
-                  <button onClick={() => onEdit(c)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><Pencil size={16} /></button>
-                  <button onClick={() => onDelete(c.id)} className="p-2 text-slate-300 hover:bg-red-50 hover:text-red-500 rounded-lg"><Trash2 size={16} /></button>
+                  {canEdit && (
+                    <>
+                      <button onClick={() => onEdit(c)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg"><Pencil size={16} /></button>
+                      <button onClick={() => onDelete(c.id)} className="p-2 text-slate-300 hover:bg-red-50 hover:text-red-500 rounded-lg"><Trash2 size={16} /></button>
+                    </>
+                  )}
                 </div>
               </div>
 
