@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Pencil, Trash2, Banknote } from 'lucide-react';
+import { Search, Pencil, Trash2, Banknote, ShieldCheck, AlertCircle } from 'lucide-react';
 
 export default function ListaClientes({
   clientes,
@@ -10,6 +10,22 @@ export default function ListaClientes({
   onPay,
   canEdit = true
 }) {
+
+  const getClientStatus = (c) => {
+    // Lógica de estado: Si está cortado o tiene deuda > 0 -> Rojo
+    if (c.estado_servicio === 'cortado' || (c.deuda && Number(c.deuda) > 0)) {
+      return {
+        color: 'text-red-500 bg-red-50',
+        icon: <AlertCircle size={14} />,
+        label: 'DEUDA / CORTADO'
+      };
+    }
+    return {
+      color: 'text-green-600 bg-green-50',
+      icon: <ShieldCheck size={14} />,
+      label: 'AL DÍA'
+    };
+  };
 
   return (
     <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-300">
@@ -25,12 +41,18 @@ export default function ListaClientes({
 
       <div className="space-y-3">
         {clientes.filter(c => c.nombre_completo?.toLowerCase().includes(busqueda.toLowerCase())).map(c => {
+          const status = getClientStatus(c);
 
           return (
             <div key={c.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
-              <div className="flex justify-between items-center mb-3">
+              <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h3 className="font-bold text-slate-800">{c.nombre_completo}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-slate-800">{c.nombre_completo}</h3>
+                    <span className={`flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-black ${status.color}`}>
+                      {status.icon} {status.label}
+                    </span>
+                  </div>
                   <div className="flex gap-2">
                     <p className="text-xs text-slate-400 font-mono text-[10px]">TEL: {c.telefono}</p>
                     {c.cedula && <p className="text-xs text-blue-400 font-mono text-[10px]">C.I.: {c.cedula}</p>}
