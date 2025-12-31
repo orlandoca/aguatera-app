@@ -30,7 +30,7 @@ export const authService = {
         const { data, error } = await supabase
             .from('perfiles')
             .select('*')
-            .eq('id', userId)
+            .eq('auth_user_id', userId)
             .single();
 
         if (error) throw error;

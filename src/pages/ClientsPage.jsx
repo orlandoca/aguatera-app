@@ -3,9 +3,11 @@ import ListaClientes from '../components/ListaClientes.jsx';
 import Formulario from '../components/Formulario.jsx';
 import { clientsService } from '../services/clients.service';
 import { paymentsService } from '../services/payments.service';
+import { useAuth } from '../store/AuthContext';
 
-export default function ClientsPage({ session, userRole = "user" }) {
-    // Verificamos rol pasado explícitamente desde la tabla perfiles
+export default function ClientsPage() {
+    const { userRole, userProfile } = useAuth();
+    // Verificamos rol pasado globalmente
     const canEdit = userRole !== 'cobrador';
     console.log("userRole", userRole);
 
@@ -85,15 +87,21 @@ export default function ClientsPage({ session, userRole = "user" }) {
             return;
         }
 
+        const referencia = prompt("Referencia (opcional):", "Pago mensual") || "Sin referencia";
+
         try {
             await paymentsService.create({
                 cliente_id: client.id,
                 monto: monto,
-                tipo: 'Mensualidad',
-                metodo: 'Efectivo',
-                fecha_pago: new Date().toISOString()
+                tipo: 'mensualidad',
+                metodo: 'efectivo',
+                fecha_pago: new Date().toISOString(),
+                cobrado_por: userProfile?.id, // ID del perfil
+                referencia: referencia,
+                periodo_cubierto: new Date().toISOString().split('T')[0], // Fecha actual YYYY-MM-DD
+                // deuda_id: null // Opcional, si no está vinculado a una deuda específica
             });
-            alert("¡Pago registrado!");
+            alert("¡Pago registrado correctamente!");
         } catch (err) {
             alert("Error registrando pago: " + err.message);
         }
