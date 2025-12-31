@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Download, ReceiptText } from 'lucide-react';
+import { Calendar, Download, ReceiptText, Zap, CalendarRange } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
 export default function Historial({ pagos }) {
@@ -17,6 +17,7 @@ export default function Historial({ pagos }) {
     const datosExcel = pagos.map(p => ({
       Fecha: new Date(p.created_at || p.fecha_pago).toLocaleString('es-PY'),
       Cliente: p.clientes?.nombre_completo || 'Sin Nombre',
+      Tipo: p.tipo || 'OTRO',
       Monto: Number(p.monto),
       Metodo: p.metodo,
       Referencia: p.referencia || '-'
@@ -28,6 +29,32 @@ export default function Historial({ pagos }) {
 
     const nombreArchivo = `Reporte_Pagos_${new Date().toISOString().split('T')[0]}.xlsx`;
     XLSX.writeFile(libro, nombreArchivo);
+  };
+
+  const getPaymentStyle = (tipo) => {
+    switch (tipo) {
+      case 'conexion':
+        return {
+          bg: 'bg-purple-50',
+          text: 'text-purple-600',
+          icon: <Zap size={18} />,
+          label: 'CONEXIÓN'
+        };
+      case 'mensualidad':
+        return {
+          bg: 'bg-blue-50',
+          text: 'text-blue-600',
+          icon: <CalendarRange size={18} />,
+          label: 'MENSUAL'
+        };
+      default:
+        return {
+          bg: 'bg-slate-50',
+          text: 'text-slate-500',
+          icon: <Calendar size={18} />,
+          label: 'PAGO'
+        };
+    }
   };
 
   return (
@@ -69,27 +96,35 @@ export default function Historial({ pagos }) {
         {pagos.length === 0 ? (
           <p className="text-center py-10 text-slate-400 italic text-sm">No hay registros.</p>
         ) : (
-          pagos.map((p) => (
-            <div key={p.id} className="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-50 shadow-sm hover:border-slate-200 transition-all">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-blue-50 text-blue-500">
-                  <Calendar size={18} />
+          pagos.map((p) => {
+            const style = getPaymentStyle(p.tipo);
+            return (
+              <div key={p.id} className="bg-white p-4 rounded-2xl flex justify-between items-center border border-slate-50 shadow-sm hover:border-slate-200 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl ${style.bg} ${style.text}`}>
+                    {style.icon}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${style.bg} ${style.text} uppercase`}>
+                        {style.label}
+                      </span>
+                      <p className="font-bold text-slate-800 text-sm leading-tight">
+                        {p.clientes?.nombre_completo || 'Pago registrado'}
+                      </p>
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-medium mt-1">
+                      {new Date(p.created_at || p.fecha_pago).toLocaleString('es-PY')}
+                      {p.referencia && <span className="block text-slate-500 font-bold uppercase mt-0.5">Ref: {p.referencia}</span>}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-slate-800 text-sm leading-tight">
-                    {p.clientes?.nombre_completo || 'Pago registrado'}
-                  </p>
-                  <p className="text-[10px] text-slate-400 font-medium">
-                    {new Date(p.created_at || p.fecha_pago).toLocaleString('es-PY')}
-                    {p.referencia && <span className="block text-blue-500 font-bold uppercase mt-0.5">Ref: {p.referencia}</span>}
-                  </p>
-                </div>
+                <p className="font-black text-sm text-blue-600">
+                  + {Number(p.monto).toLocaleString()}
+                </p>
               </div>
-              <p className="font-black text-sm text-blue-600">
-                + {Number(p.monto).toLocaleString()}
-              </p>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

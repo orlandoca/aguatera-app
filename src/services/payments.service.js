@@ -19,5 +19,17 @@ export const paymentsService = {
 
         if (error) throw error;
         return data;
+    },
+
+    async checkConnectionPayment(clienteId) {
+        const { data, error } = await supabase
+            .from('pagos')
+            .select('id')
+            .eq('cliente_id', clienteId)
+            .eq('tipo', 'conexion')
+            .limit(1);
+
+        if (error) throw error;
+        return data.length > 0;
     }
 };

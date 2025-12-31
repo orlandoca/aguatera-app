@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ListaClientes from '../components/ListaClientes.jsx';
 import Formulario from '../components/Formulario.jsx';
+import PaymentModal from '../components/PaymentModal.jsx'; // Importado
 import { clientsService } from '../services/clients.service';
 import { paymentsService } from '../services/payments.service';
 import { useAuth } from '../store/AuthContext';
@@ -15,6 +16,7 @@ export default function ClientsPage() {
     const [clients, setClients] = useState([]);
     const [search, setSearch] = useState("");
     const [editingClient, setEditingClient] = useState(null);
+    const [paymentClient, setPaymentClient] = useState(null); // Estado para el modal de pagos
     const [loading, setLoading] = useState(true);
 
     const fetchClients = async () => {
@@ -76,32 +78,19 @@ export default function ClientsPage() {
         }
     };
 
-    const handlePay = async (client) => {
-        if (!client) return;
-        const montoStr = prompt(`Ingrese el monto a cobrar a ${client.nombre_completo}:`, "33000");
-        if (!montoStr) return;
-        const monto = Number(montoStr);
+    const handlePay = (client) => {
+        setPaymentClient(client);
+    };
 
-        if (isNaN(monto) || monto <= 0) {
-            alert("Monto inválido");
-            return;
-        }
-
-        const referencia = prompt("Referencia (opcional):", "Pago mensual") || "Sin referencia";
-
+    const handlePaymentSubmit = async (paymentData) => {
         try {
             await paymentsService.create({
-                cliente_id: client.id,
-                monto: monto,
-                tipo: 'mensualidad',
-                metodo: 'efectivo',
-                fecha_pago: new Date().toISOString(),
-                cobrado_por: userProfile?.id, // ID del perfil
-                referencia: referencia,
-                periodo_cubierto: new Date().toISOString().split('T')[0], // Fecha actual YYYY-MM-DD
-                // deuda_id: null // Opcional, si no está vinculado a una deuda específica
+                ...paymentData,
+                cliente_id: paymentClient.id,
+                cobrado_por: userProfile?.id
             });
             alert("¡Pago registrado correctamente!");
+            setPaymentClient(null);
         } catch (err) {
             alert("Error registrando pago: " + err.message);
         }
@@ -137,6 +126,13 @@ export default function ClientsPage() {
                 onEdit={(c) => { setEditingClient(c); setView("form"); }}
                 onDelete={handleDelete}
                 onPay={handlePay}
+            />
+
+            <PaymentModal
+                client={paymentClient}
+                isOpen={!!paymentClient}
+                onClose={() => setPaymentClient(null)}
+                onSave={handlePaymentSubmit}
             />
         </>
     );

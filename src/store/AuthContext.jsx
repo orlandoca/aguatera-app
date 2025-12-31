@@ -25,6 +25,10 @@ export const AuthProvider = ({ children }) => {
                 }
             }
             setLoading(false);
+            setLoading(false);
+        }).catch(err => {
+            console.error("Error checking session:", err);
+            setLoading(false);
         });
 
         // Subscribe to changes
@@ -55,9 +59,13 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!session
     };
 
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center text-slate-500">Cargando aplicación...</div>;
+    }
+
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 };
