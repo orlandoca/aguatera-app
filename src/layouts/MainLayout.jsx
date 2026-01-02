@@ -5,7 +5,7 @@ import { authService } from '../services/auth.service';
 import { useAuth } from '../store/AuthContext';
 
 export default function MainLayout({ children }) {
-    const { session } = useAuth();
+    const { session, userRole } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -26,12 +26,21 @@ export default function MainLayout({ children }) {
         <div className="min-h-screen bg-slate-50 pb-20 font-sans text-slate-900">
             <header className="bg-blue-700 text-white p-6 shadow-md sticky top-0 z-20">
                 <div className="max-w-md mx-auto flex justify-between items-center">
-                    <h1 className="text-xl font-black italic tracking-tighter uppercase">
-                        {session?.user?.email || 'Sistema'}
-                    </h1>
+                    <div>
+                        <h1 className="text-xl font-black italic tracking-tighter uppercase leading-none">
+                            {session?.user?.email || 'Sistema'}
+                        </h1>
+                        <span className="text-[10px] font-bold tracking-widest block mt-1">
+                            {userRole === undefined ? (
+                                <span className="text-yellow-300 animate-pulse">CARGANDO PERMISOS...</span>
+                            ) : (
+                                <span className="text-blue-200">{userRole ? userRole.toUpperCase() : 'SIN ROL'}</span>
+                            )}
+                        </span>
+                    </div>
                     <button
                         onClick={handleLogout}
-                        className="text-[10px] opacity-60 font-bold underline"
+                        className="text-[10px] opacity-60 font-bold underline ml-4"
                     >
                         SALIR
                     </button>

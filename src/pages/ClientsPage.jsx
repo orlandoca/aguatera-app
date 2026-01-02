@@ -22,9 +22,19 @@ export default function ClientsPage() {
     const fetchClients = async () => {
         setLoading(true);
         try {
-            const data = await clientsService.getAll();
+            // Timeout de 10 segundos
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Tiempo de espera agotado. Verifique su conexión.")), 10000)
+            );
+
+            const data = await Promise.race([
+                clientsService.getAll(),
+                timeoutPromise
+            ]);
+
             setClients(data);
         } catch (error) {
+            console.error("Error fetching clients:", error);
             alert("Error cargando clientes: " + error.message);
         } finally {
             setLoading(false);

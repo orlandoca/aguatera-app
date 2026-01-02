@@ -31,7 +31,7 @@ export const authService = {
             .from('perfiles')
             .select('*')
             .eq('auth_user_id', userId)
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
         return data;

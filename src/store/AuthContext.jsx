@@ -7,48 +7,62 @@ export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }) => {
     const [session, setSession] = useState(null);
-    const [userRole, setUserRole] = useState(null);
+    const [userRole, setUserRole] = useState(undefined);
     const [userProfile, setUserProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Fetch initial session
-        authService.getSession().then(async (session) => {
-            setSession(session);
-            if (session?.user?.id) {
-                try {
-                    const profile = await authService.getProfile(session.user.id);
+        let mounted = true;
+
+        // Función auxiliar para cargar perfil en segundo plano sin bloquear UI
+        const loadProfile = async (userId) => {
+            try {
+                const profile = await authService.getProfile(userId);
+                if (mounted) {
                     setUserProfile(profile);
                     setUserRole(profile?.rol);
-                } catch (e) {
-                    console.error("Error fetching profile", e);
                 }
+            } catch (e) {
+                console.error("Background profile fetch failed:", e);
+                // No bloqueamos la app, el usuario sigue logueado pero sin rol extra
             }
+        };
+
+        // 1. Initial Session Check
+        authService.getSession().then((session) => {
+            if (!mounted) return;
+            setSession(session);
+            // DESBLOQUEO INMEDIATO: La app carga ya, el perfil llegará después
             setLoading(false);
-            setLoading(false);
-        }).catch(err => {
-            console.error("Error checking session:", err);
-            setLoading(false);
+
+            if (session?.user?.id) {
+                loadProfile(session.user.id);
+            }
+        }).catch((err) => {
+            console.error("Session check error:", err);
+            setLoading(false); // Asegurar desbloqueo incluso en error
         });
 
-        // Subscribe to changes
+        // 2. Subscribe to changes
         const { unsubscribe } = authService.onAuthStateChange(async (_event, session) => {
+            if (!mounted) return;
             setSession(session);
+
+            // Si hubo cambio de sesión (login/logout), actualizamos UI inmediatamente
+            setLoading(false);
+
             if (session?.user?.id) {
-                try {
-                    const profile = await authService.getProfile(session.user.id);
-                    setUserProfile(profile);
-                    setUserRole(profile?.rol);
-                } catch (e) {
-                    console.error("Error fetching profile", e);
-                }
+                loadProfile(session.user.id);
             } else {
                 setUserRole(null);
                 setUserProfile(null);
             }
         });
 
-        return () => unsubscribe();
+        return () => {
+            mounted = false;
+            unsubscribe();
+        };
     }, []);
 
     const value = {
