@@ -9,6 +9,7 @@ export const exportToExcel = (pagos) => {
     const datosExcel = pagos.map(p => ({
         Fecha: new Date(p.created_at || p.fecha_pago).toLocaleDateString('es-PY'),
         Cliente: p.clientes?.nombre_completo || 'Desconocido',
+        Tipo: p.tipo || 'OTRO',
         Monto: p.monto,
         Metodo: p.metodo || 'Efectivo',
         Referencia: p.referencia || ''

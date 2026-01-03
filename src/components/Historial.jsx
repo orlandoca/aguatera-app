@@ -1,6 +1,5 @@
 import React from 'react';
-import { Calendar, Download, ReceiptText, Zap, CalendarRange } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { Calendar, ReceiptText, Zap, CalendarRange } from 'lucide-react';
 
 export default function Historial({ pagos }) {
 
@@ -8,28 +7,7 @@ export default function Historial({ pagos }) {
   const totalMensual = pagos.reduce((acc, p) => acc + Number(p.monto), 0);
 
   // --- FUNCIÓN PARA EXPORTAR ---
-  const exportarExcel = () => {
-    if (pagos.length === 0) {
-      alert("No hay datos para exportar.");
-      return;
-    }
 
-    const datosExcel = pagos.map(p => ({
-      Fecha: new Date(p.created_at || p.fecha_pago).toLocaleString('es-PY'),
-      Cliente: p.clientes?.nombre_completo || 'Sin Nombre',
-      Tipo: p.tipo || 'OTRO',
-      Monto: Number(p.monto),
-      Metodo: p.metodo,
-      Referencia: p.referencia || '-'
-    }));
-
-    const hoja = XLSX.utils.json_to_sheet(datosExcel);
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, "Reporte");
-
-    const nombreArchivo = `Reporte_Pagos_${new Date().toISOString().split('T')[0]}.xlsx`;
-    XLSX.writeFile(libro, nombreArchivo);
-  };
 
   const getPaymentStyle = (tipo) => {
     switch (tipo) {
@@ -60,16 +38,9 @@ export default function Historial({ pagos }) {
   return (
     <div className="space-y-4 animate-in fade-in duration-500">
 
-      {/* CABECERA CON BOTÓN DE EXPORTAR */}
+      {/* CABECERA */}
       <div className="flex justify-between items-center px-1">
         <h2 className="font-black text-slate-800 text-lg uppercase tracking-tight">Historial</h2>
-        <button
-          onClick={exportarExcel}
-          className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-2xl text-[10px] font-black hover:bg-green-700 transition-all shadow-md active:scale-95"
-        >
-          <Download size={14} />
-          BAJAR EXCEL
-        </button>
       </div>
 
       {/* Resumen */}
