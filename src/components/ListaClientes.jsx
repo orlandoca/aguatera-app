@@ -12,12 +12,12 @@ export default function ListaClientes({
 }) {
 
   const getClientStatus = (c) => {
-    // Lógica de estado: Si está cortado o tiene deuda > 0 -> Rojo
-    if (c.estado_servicio === 'cortado' || (c.deuda && Number(c.deuda) > 0)) {
+    // Lógica de estado: Si está cortado, inactivo, o tiene deuda > 0 -> Rojo
+    if (c.estado_servicio === 'cortado' || c.estado_servicio === 'inactivo' || (c.deuda && Number(c.deuda) > 0)) {
       return {
         color: 'text-red-500 bg-red-50',
         icon: <AlertCircle size={14} />,
-        label: 'DEUDA / CORTADO'
+        label: c.estado_servicio === 'inactivo' ? 'INACTIVO' : 'DEUDA / CORTADO'
       };
     }
     return {

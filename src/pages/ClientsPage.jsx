@@ -63,7 +63,8 @@ export default function ClientsPage() {
             if (editingClient) {
                 await clientsService.update(editingClient.id, clientData);
             } else {
-                await clientsService.create(clientData);
+                // Estado por defecto: inactivo
+                await clientsService.create({ ...clientData, estado_servicio: 'inactivo' });
             }
             await fetchClients();
             setView("list");
@@ -99,6 +100,13 @@ export default function ClientsPage() {
                 cliente_id: paymentClient.id,
                 cobrado_por: userProfile?.id
             });
+
+            // Auto-activación: Si el cliente no está activo, se activa al pagar
+            if (paymentClient.estado_servicio !== 'activo') {
+                await clientsService.update(paymentClient.id, { estado_servicio: 'activo' });
+            }
+
+            await fetchClients(); // Refrescar lista para ver el nuevo estado
             alert("¡Pago registrado correctamente!");
             setPaymentClient(null);
         } catch (err) {
