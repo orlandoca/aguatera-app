@@ -60,7 +60,7 @@ export const getClientStatusConfig = (client) => {
             color: 'text-amber-700 bg-amber-100',
             dot: 'bg-amber-500',
             icon: <AlertTriangle size={14} />,
-            label: 'CON DEUDA',
+            label: 'DEUDA PENDIENTE',
             borderColor: 'border-amber-200'
         };
     }

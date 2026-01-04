@@ -101,8 +101,8 @@ export default function ClientsPage() {
                 cobrado_por: userProfile?.id
             });
 
-            // Auto-activación: Si el cliente no está activo, se activa al pagar
-            if (paymentClient.estado_servicio !== 'activo') {
+            // Auto-activación: Si el cliente no está activo y el pago NO es de conexión (solo mensualidad activa)
+            if (paymentClient.estado_servicio !== 'activo' && paymentData.tipo !== 'conexion') {
                 await clientsService.update(paymentClient.id, { estado_servicio: 'activo' });
             }
 

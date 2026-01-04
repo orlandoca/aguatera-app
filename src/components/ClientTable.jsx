@@ -1,3 +1,5 @@
+import React from 'react';
+import { Pencil, Trash2, Banknote } from 'lucide-react';
 import { getClientStatusConfig } from '../utils/client.utils';
 
 export default function ClientTable({ clients, onEdit, onDelete, onPay, canEdit }) {
