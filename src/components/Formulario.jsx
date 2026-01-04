@@ -5,32 +5,47 @@ export default function Formulario({ clienteEdicion, onGuardar, onCancelar }) {
     <form onSubmit={onGuardar} className="space-y-4 animate-in zoom-in-95 duration-200">
       <h2 className="font-black text-xl">{clienteEdicion ? 'Actualizar Datos' : 'Registrar Vecino'}</h2>
       <div className="space-y-4 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-        
-        {/* Nuevo campo: Cédula */}
+
         <div>
-          <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Número de Cédula</label>
-          <input 
-            name="cedula" 
-            defaultValue={clienteEdicion?.cedula} 
-            placeholder="Ej: 1.234.567" 
-            required 
-            className="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" 
+          <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Cédula</label>
+          <input
+            name="cedula"
+            defaultValue={clienteEdicion?.cedula}
+            placeholder="Ej: 1.234.567"
+            required
+            className="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
           <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Nombre Completo</label>
-          <input name="nombre" defaultValue={clienteEdicion?.nombre} placeholder="Ej: Juan Pérez" required className="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" />
+          <input
+            name="nombre"
+            defaultValue={clienteEdicion?.nombre_completo}
+            placeholder="Ej: Juan Pérez"
+            required
+            className="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
-        
+
         <div>
-          <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">WhatsApp</label>
-          <input name="tel" defaultValue={clienteEdicion?.tel} placeholder="Ej: 5959..." required className="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" />
+          <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Teléfono / WhatsApp</label>
+          <input
+            name="tel"
+            defaultValue={clienteEdicion?.telefono}
+            placeholder="Ej: 09xx..."
+            className="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
-        
+
         <div>
-          <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Deuda Gs.</label>
-          <input name="deuda" type="number" defaultValue={clienteEdicion?.deuda || 0} placeholder="0" className="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500" />
+          <label className="text-[10px] font-bold text-slate-400 uppercase ml-2">Dirección</label>
+          <input
+            name="direccion"
+            defaultValue={clienteEdicion?.direccion}
+            placeholder="Ej: Barrio San José"
+            className="w-full p-4 bg-slate-100 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
         <div className="flex gap-2 pt-2">
