@@ -7,7 +7,8 @@ import { ShieldCheck, AlertCircle, AlertTriangle } from 'lucide-react';
 export const SERVICE_STATUS = {
     ACTIVO: 'activo',
     INACTIVO: 'inactivo',
-    CORTADO: 'cortado'
+    CORTADO: 'cortado',
+    BAJA: 'baja'
 };
 
 /**
@@ -16,8 +17,8 @@ export const SERVICE_STATUS = {
 export const CLIENT_FILTERS = {
     ALL: 'all',
     ACTIVE: 'activo', // Solo activos y sin deuda
-    DEBT: 'deuda',    // Con deuda (independiente del estado, aunque usualmente activos/cortados)
-    INACTIVE: 'inactivo', // Inactivos o Cortados
+    DEBT: 'deuda',    // Con deuda (independiente del estado)
+    INACTIVE: 'inactivo', // Inactivos, Cortados o Baja
 };
 
 /**
@@ -27,7 +28,7 @@ export const CLIENT_FILTERS = {
  */
 export const getClientStatusConfig = (client) => {
     const hasDebt = client.deuda && Number(client.deuda) > 0;
-    const status = client.estado_servicio;
+    const status = client.estado; // Renamed from estado_servicio
 
     // Prioridad 1: Cortado
     if (status === SERVICE_STATUS.CORTADO) {
@@ -41,14 +42,14 @@ export const getClientStatusConfig = (client) => {
         };
     }
 
-    // Prioridad 2: Inactivo
-    if (status === SERVICE_STATUS.INACTIVO) {
+    // Prioridad 2: Inactivo o Baja
+    if (status === SERVICE_STATUS.INACTIVO || status === SERVICE_STATUS.BAJA) {
         return {
             status: 'inactivo',
             color: 'text-slate-600 bg-slate-100',
             dot: 'bg-slate-400',
-            icon: <AlertCircle size={14} />, // Icono neutro
-            label: 'INACTIVO',
+            icon: <AlertCircle size={14} />,
+            label: status === SERVICE_STATUS.BAJA ? 'BAJA' : 'INACTIVO',
             borderColor: 'border-slate-200'
         };
     }
@@ -87,7 +88,7 @@ export const filterClientsByStatus = (clients, filterMode) => {
 
         if (filterMode === CLIENT_FILTERS.ACTIVE) {
             // Activos sin deuda
-            return c.estado_servicio === SERVICE_STATUS.ACTIVO && !hasDebt;
+            return c.estado === SERVICE_STATUS.ACTIVO && !hasDebt;
         }
 
         if (filterMode === CLIENT_FILTERS.DEBT) {
@@ -96,8 +97,10 @@ export const filterClientsByStatus = (clients, filterMode) => {
         }
 
         if (filterMode === CLIENT_FILTERS.INACTIVE) {
-            // Inactivos o Cortados
-            return c.estado_servicio === SERVICE_STATUS.INACTIVO || c.estado_servicio === SERVICE_STATUS.CORTADO;
+            // Inactivos, Cortados o Baja
+            return c.estado === SERVICE_STATUS.INACTIVO ||
+                c.estado === SERVICE_STATUS.CORTADO ||
+                c.estado === SERVICE_STATUS.BAJA;
         }
 
         return true;

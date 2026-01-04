@@ -7,7 +7,7 @@ import { paymentsService } from '../services/payments.service';
 import { useAuth } from '../store/AuthContext';
 
 export default function ClientsPage() {
-    const { userRole, userProfile } = useAuth();
+    const { userRole, usuario } = useAuth();
     // Verificamos rol pasado globalmente
     const canEdit = userRole !== 'cobrador';
     console.log("userRole", userRole);
@@ -64,7 +64,7 @@ export default function ClientsPage() {
                 await clientsService.update(editingClient.id, clientData);
             } else {
                 // Estado por defecto: inactivo
-                await clientsService.create({ ...clientData, estado_servicio: 'inactivo' });
+                await clientsService.create({ ...clientData, estado: 'inactivo' });
             }
             await fetchClients();
             setView("list");
@@ -98,12 +98,12 @@ export default function ClientsPage() {
             await paymentsService.create({
                 ...paymentData,
                 cliente_id: paymentClient.id,
-                cobrado_por: userProfile?.id
+                cobrado_por: usuario?.id
             });
 
             // Auto-activación: Si el cliente no está activo y el pago NO es de conexión (solo mensualidad activa)
-            if (paymentClient.estado_servicio !== 'activo' && paymentData.tipo !== 'conexion') {
-                await clientsService.update(paymentClient.id, { estado_servicio: 'activo' });
+            if (paymentClient.estado !== 'activo' && paymentData.tipo !== 'conexion') {
+                await clientsService.update(paymentClient.id, { estado: 'activo' });
             }
 
             await fetchClients(); // Refrescar lista para ver el nuevo estado
