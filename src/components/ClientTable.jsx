@@ -1,21 +1,7 @@
-import React from 'react';
-import { Pencil, Trash2, Banknote, ShieldCheck, AlertCircle } from 'lucide-react';
+import { getClientStatusConfig } from '../utils/client.utils';
 
 export default function ClientTable({ clients, onEdit, onDelete, onPay, canEdit }) {
-    const getClientStatus = (c) => {
-        if (c.estado_servicio === 'cortado' || c.estado_servicio === 'inactivo' || (c.deuda && Number(c.deuda) > 0)) {
-            return {
-                color: 'text-red-700 bg-red-100',
-                dot: 'bg-red-500',
-                label: c.estado_servicio === 'inactivo' ? 'Inactivo' : 'Deuda/Cortado'
-            };
-        }
-        return {
-            color: 'text-green-700 bg-green-100',
-            dot: 'bg-green-500',
-            label: 'Al día'
-        };
-    };
+
 
     return (
         <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm bg-white">
@@ -32,7 +18,7 @@ export default function ClientTable({ clients, onEdit, onDelete, onPay, canEdit 
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {clients.map((client) => {
-                            const status = getClientStatus(client);
+                            const status = getClientStatusConfig(client);
                             return (
                                 <tr key={client.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-4 py-3 font-medium text-slate-800">
