@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
 
             if (session?.user?.id) {
-                loadProfile(session.user.id);
+                loadUsuario(session.user.id);
             }
         }).catch((err) => {
             console.error("Session check error:", err);
