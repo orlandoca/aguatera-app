@@ -26,9 +26,9 @@ export const authService = {
         return subscription;
     },
 
-    async getProfile(userId) {
+    async getUsuario(userId) {
         const { data, error } = await supabase
-            .from('perfiles')
+            .from('usuarios')
             .select('*')
             .eq('auth_user_id', userId)
             .maybeSingle();

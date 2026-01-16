@@ -4,11 +4,29 @@ export const clientsService = {
     async getAll() {
         const { data, error } = await supabase
             .from('clientes')
-            .select('*')
+            .select(`
+                *,
+                deudas (
+                    monto,
+                    estado
+                )
+            `)
             .order('nombre_completo', { ascending: true });
 
         if (error) throw error;
-        return data || [];
+
+        // Transform data to include calculated debt
+        return data?.map(client => {
+            // Calculate total pending debt
+            const totalDeuda = client.deudas
+                ?.filter(d => d.estado === 'pendiente')
+                .reduce((sum, d) => sum + Number(d.monto), 0) || 0;
+
+            return {
+                ...client,
+                deuda: totalDeuda
+            };
+        }) || [];
     },
 
     async create(clienteData) {

@@ -1,24 +1,9 @@
 import React from 'react';
-import { Pencil, Trash2, Banknote, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Pencil, Trash2, Banknote } from 'lucide-react';
+import { getClientStatusConfig } from '../utils/client.utils';
 
 export default function ClientCard({ client, onEdit, onDelete, onPay, canEdit }) {
-    const getClientStatus = (c) => {
-        // Lógica de estado: Si está cortado, inactivo, o tiene deuda > 0 -> Rojo
-        if (c.estado_servicio === 'cortado' || c.estado_servicio === 'inactivo' || (c.deuda && Number(c.deuda) > 0)) {
-            return {
-                color: 'text-red-500 bg-red-50',
-                icon: <AlertCircle size={14} />,
-                label: c.estado_servicio === 'inactivo' ? 'INACTIVO' : 'DEUDA / CORTADO'
-            };
-        }
-        return {
-            color: 'text-green-600 bg-green-50',
-            icon: <ShieldCheck size={14} />,
-            label: 'AL DÍA'
-        };
-    };
-
-    const status = getClientStatus(client);
+    const status = getClientStatusConfig(client);
 
     return (
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow">

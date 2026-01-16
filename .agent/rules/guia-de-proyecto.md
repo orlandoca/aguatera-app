@@ -106,9 +106,7 @@ Información principal de los abonados.
   - `telefono` (text)
   - `direccion` (text)
   - `coordenadas_gps` (text)
-  - `estado` (text) - Estado general (texto simple).
-  - `estado_servicio` (CUSTOM TYPE: `app_estado_servicio`) - Estado técnico (ej: activo, cortado).
-  - `deuda` (numeric) - Monto acumulado de deuda (posible campo calculado o cache).
+  - `estado` (CUSTOM TYPE: `app_estado_cliente` , VALUES : activo, cortado, baja, inactivo) 
   - `created_at`, `updated_at` (timestamptz)
 
 #### 2. `pagos`
@@ -116,12 +114,12 @@ Registro de transacciones. Ahora vincula pagos a deudas específicas.
 - **PK:** `id` (int8)
 - **FKs:**
   - `cliente_id` (int4) -> Relación con `clientes.id`.
-  - `cobrado_por` (uuid) -> Relación con `perfiles.id`.
+  - `cobrado_por` (uuid) -> Relación con `usuarios.id`.
   - `deuda_id` (int8) -> Relación con `deudas.id` (pago específico de una deuda).
 - **Campos:**
   - `monto` (numeric)
-  - `tipo` (CUSTOM TYPE: `app_tipo_pago`)
-  - `metodo` (CUSTOM TYPE: `app_metodo_pago`)
+  - `tipo` (CUSTOM TYPE: `app_tipo_pago` , VALUES: mensualidad, conexion, reparacion, multa, otro )
+  - `metodo` (CUSTOM TYPE: `app_metodo_pago` , VALUES: efectivo, transferencia, qr, cheque)
   - `referencia` (text)
   - `fecha_pago` (timestamptz)
   - `periodo_cubierto` (date)
@@ -135,7 +133,7 @@ Registro de deudas generadas por periodo para cada cliente.
 - **Campos:**
   - `monto` (numeric)
   - `periodo` (date) - Mes/Año al que corresponde la deuda.
-  - `estado` (CUSTOM TYPE: `app_estado_deuda`) - Ej: pendiente, pagado, parcial.
+  - `estado` (CUSTOM TYPE: `app_estado_deuda` ,  VALUE: pendiente, pagado, anulado) 
   - `created_at`, `updated_at` (timestamptz)
 
 #### 4. `tarifas` (Nueva)
@@ -152,7 +150,7 @@ Registro de auditoría de cortes y reconexiones de servicio.
 - **PK:** `id` (int8)
 - **FKs:**
   - `cliente_id` (int4) -> Relación con `clientes.id`.
-  - `realizado_por` (uuid) -> Relación con `perfiles.id` (quién ejecutó la acción).
+  - `realizado_por` (uuid) -> Relación con `usuarios.id` (quién ejecutó la acción).
 - **Campos:**
   - `fecha_corte` (timestamptz)
   - `motivo` (text)
@@ -160,7 +158,7 @@ Registro de auditoría de cortes y reconexiones de servicio.
   - `observacion` (text)
   - `created_at` (timestamptz)
 
-#### 6. `perfiles`
+#### 6. `usuarios`
 Usuarios del sistema (Staff/Administradores).
 - **PK:** `id` (uuid)
 - **FKs:**
@@ -172,7 +170,7 @@ Usuarios del sistema (Staff/Administradores).
   - `created_at`, `updated_at` (timestamptz)
 
 ### Relaciones Clave
-1.  **Cobros y Cortes:** Tanto `pagos` como `historial_cortes` trazan al responsable mediante la relación con `perfiles`.
+1.  **Cobros y Cortes:** Tanto `pagos` como `historial_cortes` trazan al responsable mediante la relación con `usuarios`.
 2.  **Ciclo de Facturación:** `clientes` -> tienen `deudas` -> que se saldan con `pagos`.
 
 ### Tipos de Datos Personalizados (Enums)
@@ -180,5 +178,5 @@ Asegúrate de manejar estos enums en el frontend (TypeScript) y backend:
 - `app_tipo_pago`
 - `app_metodo_pago`
 - `app_rol`
-- `app_estado_servicio` (Nuevo)
-- `app_estado_deuda` (Nuevo)
+- `app_estado_clientes`
+- `app_estado_deuda` 

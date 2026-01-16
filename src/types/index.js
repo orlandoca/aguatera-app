@@ -7,8 +7,8 @@
  * @property {string} direccion
  * @property {string} [coordenadas_gps]
  * @property {string} estado
- * @property {'activo' | 'cortado' | 'suspendido'} estado_servicio
- * @property {number} [deuda]
+ * @property {'activo' | 'cortado' | 'inactivo' | 'baja'} estado
+ * @property {number} [deuda] - Propiedad calculada (no existe en DB)
  * @property {string} created_at
  * @property {string} updated_at
  */
@@ -27,7 +27,7 @@
  */
 
 /**
- * @typedef {Object} UserProfile
+ * @typedef {Object} Usuario
  * @property {string} id
  * @property {string} nombre_completo
  * @property {'admin' | 'staff' | 'cobrador'} rol

@@ -8,22 +8,22 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
     const [session, setSession] = useState(null);
     const [userRole, setUserRole] = useState(undefined);
-    const [userProfile, setUserProfile] = useState(null);
+    const [usuario, setUsuario] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         let mounted = true;
 
-        // Función auxiliar para cargar perfil en segundo plano sin bloquear UI
-        const loadProfile = async (userId) => {
+        // Función auxiliar para cargar usuario en segundo plano sin bloquear UI
+        const loadUsuario = async (userId) => {
             try {
-                const profile = await authService.getProfile(userId);
+                const data = await authService.getUsuario(userId);
                 if (mounted) {
-                    setUserProfile(profile);
-                    setUserRole(profile?.rol);
+                    setUsuario(data);
+                    setUserRole(data?.rol);
                 }
             } catch (e) {
-                console.error("Background profile fetch failed:", e);
+                console.error("Background user fetch failed:", e);
                 // No bloqueamos la app, el usuario sigue logueado pero sin rol extra
             }
         };
@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
 
             if (session?.user?.id) {
-                loadProfile(session.user.id);
+                loadUsuario(session.user.id);
             }
         }).catch((err) => {
             console.error("Session check error:", err);
@@ -52,10 +52,10 @@ export const AuthProvider = ({ children }) => {
             setLoading(false);
 
             if (session?.user?.id) {
-                loadProfile(session.user.id);
+                loadUsuario(session.user.id);
             } else {
                 setUserRole(null);
-                setUserProfile(null);
+                setUsuario(null);
             }
         });
 
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
     const value = {
         session,
         userRole,
-        userProfile,
+        usuario,
         loading,
         isAuthenticated: !!session
     };
