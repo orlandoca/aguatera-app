@@ -20,7 +20,8 @@ export const AuthProvider = ({ children }) => {
                 const data = await authService.getUsuario(userId);
                 if (mounted) {
                     setUsuario(data);
-                    setUserRole(data?.rol);
+                    // Si no hay perfil, establecemos null para detener el "Cargando..."
+                    setUserRole(data?.rol || null);
                 }
             } catch (e) {
                 console.error("Background user fetch failed:", e);
