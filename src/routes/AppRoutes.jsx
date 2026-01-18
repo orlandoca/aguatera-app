@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../store/AuthContext';
 import MainLayout from '../layouts/MainLayout';
 import LoginPage from '../pages/LoginPage';
@@ -8,17 +8,32 @@ import ClientsPage from '../pages/ClientsPage';
 import HistoryPage from '../pages/HistoryPage';
 
 const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated } = useAuth();
-    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    const { isAuthenticated, loading } = useAuth();
+    const location = useLocation();
+
+    if (loading) return <div>Cargando...</div>; // Opcional: Spinner mientras verifica sesión
+
+    if (!isAuthenticated) {
+        // Redirigir al login guardando la ubicación actual
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
     return children;
 };
 
 export default function AppRoutes() {
     const { isAuthenticated } = useAuth();
+    // Usamos un componente wrapper para la lógica de redirección del login
+    // para poder acceder a useLocation()
+    const LoginRedirect = () => {
+        const location = useLocation();
+        const from = location.state?.from?.pathname || "/";
+        return !isAuthenticated ? <LoginPage /> : <Navigate to={from} replace />;
+    };
 
     return (
         <Routes>
-            <Route path="/login" element={!isAuthenticated ? <LoginPage /> : <Navigate to="/" replace />} />
+            <Route path="/login" element={<LoginRedirect />} />
 
             <Route path="/" element={
                 <ProtectedRoute>
